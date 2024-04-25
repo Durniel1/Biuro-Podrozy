@@ -1,0 +1,18 @@
+{% extends "app/szablon.html" %}
+{% block tytul%}Środek Transportu{% endblock %}
+{% block zawartosc %}
+    <table>
+        <tr>
+            <th>Nazwa</th>
+            <th>Typ</th>
+			<th>Droga Przewozu</th>
+            <th>Przewoznik</th>
+        </tr>
+        <tr>
+            <td>{{SrodekTransportu.nazwa}}</td>
+			<td>{{SrodekTransportu.typ}}</td>
+			<td>{{SrodekTransportu.droga_przewozu}}</td>
+			<td>{{SrodekTransportu.przewoznik}}</td>
+        </tr>
+    </table>
+{% endblock %}

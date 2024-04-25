@@ -1,0 +1,9 @@
+{% extends "app/szablon.html" %}
+{% load crispy_forms_tags %}
+{% block tytul%}Środki Transportu - dodawanie{% endblock %}
+{% block zawartosc %}
+<!--<form method="post">
+    {{ form|crispy }}
+</form>-->
+{% crispy form form.helper %}
+{% endblock %}

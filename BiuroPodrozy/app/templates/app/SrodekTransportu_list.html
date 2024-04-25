@@ -1,0 +1,26 @@
+{% extends "app/szablon.html" %}
+{% block tytul%}Środki Transportu{% endblock %}
+{% block zawartosc %}
+    <table>
+        <tr>
+            <th>Nazwa</th>
+            <th>Typ</th>
+			<th>Droga Przewozu</th>
+            <th>Przewoznik</th>
+            <th></th>
+			<th></th>
+			<th></th>
+        </tr>
+    	{% for SrodekTransportu in object_list %}
+        <tr>
+            <td>{{SrodekTransportu.nazwa}}</td>
+			<td>{{SrodekTransportu.typ}}</td>
+			<td>{{SrodekTransportu.droga_przewozu}}</td>
+			<td>{{SrodekTransportu.przewoznik}}</td>
+            <td><a href="{{ SrodekTransportu.get_absolute_url }}">Szczegóły</a></td>
+            <td><a href="">Edytuj</a></td>
+            <td><a href="">Usuń</a></td>
+        </tr>
+    	{% endfor %}
+    </table>
+{% endblock %}

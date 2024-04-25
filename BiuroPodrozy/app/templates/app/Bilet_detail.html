@@ -1,0 +1,23 @@
+{% extends "app/szablon.html" %}
+{% block tytul%}Bilet{% endblock %}
+{% block zawartosc %}
+    <table>
+        <tr>
+            <th>Godzina z</th>
+            <th>Godzina do</th>
+			<th>Kierunek</th>
+            <th>Status</th>
+            <th>Nr Siedzenia</th>
+            <th>Dodatkowe opłaty</th>
+        </tr>
+        <tr>
+            <td>{{Bilet.godzina_z}}</td>
+			<td>{{Bilet.godzina_do}}</td>
+			<td>{{Bilet.kierunek.z}} -> {{Bilet.kierunek.do}}</td>
+            <td>{% if Bilet.status == 1 %}Opłacony{% endif %}
+                {% if Bilet.status == 0 %}Nieopłacony{% endif %}</td>
+            <td>{{Bilet.nr_siedzenia}}</td>
+            <td>{{Bilet.dodatkowe_oplaty}}</td>
+        </tr>
+    </table>
+{% endblock %}

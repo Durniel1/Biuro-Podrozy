@@ -1,0 +1,31 @@
+{% extends "app/szablon.html" %}
+{% block tytul%}Bilety{% endblock %}
+{% block zawartosc %}
+    <table>
+        <tr>
+            <th>Godzina z</th>
+            <th>Godzina do</th>
+			<th>Kierunek</th>
+            <th>Status</th>
+            <th>Nr Siedzenia</th>
+            <th>Dodatkowe opłaty</th>
+            <th></th>
+			<th></th>
+			<th></th>
+        </tr>
+    	{% for Bilet in object_list %}
+        <tr>
+            <td>{{Bilet.godzina_z}}</td>
+			<td>{{Bilet.godzina_do}}</td>
+			<td>{{Bilet.kierunek.z}} -> {{Bilet.kierunek.do}}</td>
+            <td>{% if Bilet.status == 1 %}Opłacony{% endif %}
+                {% if Bilet.status == 0 %}Nieopłacony{% endif %}</td>
+            <td>{{Bilet.nr_siedzenia}}</td>
+            <td>{{Bilet.dodatkowe_oplaty}}</td>
+            <td><a href="{{ Bilet.get_absolute_url }}">Szczegóły</a></td>
+            <td><a href="">Edytuj</a></td>
+            <td><a href="">Usuń</a></td>
+        </tr>
+    	{% endfor %}
+    </table>
+{% endblock %}

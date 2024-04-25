@@ -1,0 +1,24 @@
+{% extends "app/szablon.html" %}
+{% block tytul%}Kierunki{% endblock %}
+{% block zawartosc %}
+    <table>
+        <tr>
+            <th>Z</th>
+            <th>Do</th>
+			<th>Środek Transportu</th>
+            <th></th>
+			<th></th>
+			<th></th>
+        </tr>
+    	{% for Kierunek in object_list %}
+        <tr>
+            <td>{{Kierunek.z}}</td>
+			<td>{{Kierunek.do}}</td>
+			<td>{{Kierunek.srodek_transportu}}</td>
+            <td><a href="{{ Kierunek.get_absolute_url }}">Szczegóły</a></td>
+            <td><a href="">Edytuj</a></td>
+            <td><a href="">Usuń</a></td>
+        </tr>
+    	{% endfor %}
+    </table>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "app/szablon.html" %}
+{% block tytul%}Bilet{% endblock %}
+{% block zawartosc %}
+    <table>
+        <tr>
+            <th>Z</th>
+            <th>Do</th>
+			<th>Środek Transportu</th>
+        </tr>
+        <tr>
+            <td>{{Kierunek.z}}</td>
+			<td>{{Kierunek.do}}</td>
+			<td>{{Kierunek.srodek_transportu}}</td>
+        </tr>
+    </table>
+{% endblock %}

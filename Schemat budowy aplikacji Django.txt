@@ -1,0 +1,610 @@
+1. CZYNNOŚCI WSTĘPNE
+2. WŁĄCZANIE SERWERA
+3. TWORZENIE MODELI, MIGRACJE I REJESTRACJA MODELI
+4. TWORZENIE SZABLONÓW
+5. TWORZENIE WIDOKÓW (ZA POMOCĄ FUNKCJI)
+6. RĘCZNE TWORZENIE FORMULARZY
+7. TWORZENIE FORMULARZY Z UŻYCIEM FORM LUB MODELFORM
+8. CLASS BASED VIEWS
+9. TWORZENIE ŚCIEŻEK
+10. LOGOWANIE, AUTORYZACJA I DEKORATORY
+
+1. CZYNNOŚCI WSTĘPNE
+	- tworzenie wirtualnego środowiska
+		python -m venv venv
+	- w wersji python (prawy dolny róg) wybrać wirtualne środowisko
+		np. 3.10.0 {'venv': venv}
+	- aktwywacja wirtualnego środowiska
+		ctrl+shift+p -> Python: Create Terminal lub (w terminalu) venv/Scripts/activate
+	- instalacja Django
+		pip install django (gdy środowisko jest aktywne)
+	- tworzenie projektu
+		django-admin startproject nazwa_projektu
+	- konfiguracja serwera django (settings.py)
+		LANGUAGE_CODE = 'pl-pl'
+		TIME_ZONE = 'Europe/Warsaw'
+	- tworzenie aplikacji
+		py manage.py startapp nazwa_aplikacji
+	- dodanie aplikacji do projektu (settings.py)
+		INSTALLED_APPS = [
+			...,
+    			'nowa_aplikacja'
+		]
+
+2. WŁĄCZANIE SERWERA
+	- bez pliku launch.json
+		py nazwa_projektu/manage.py runserver
+	- z pliku launch.json
+		ctrl+shift+d (Run and Debug)
+		create a launch.json file -> Python Debugger -> Django -> ${workspaceFolder}\nazwa_projektu\manage.py
+		F5
+
+3. TWORZENIE MODELI I MIGRACJE I REJESTRACJA
+	- tworzenie podstawowego modelu (plik models.py)
+
+		class nazwa_modelu(models.Model):
+			nazwa_pola = models.typ_pola()
+
+	- ograniczenia i walidatory
+
+		pole_znakowe = models.CharField(min_length=3,max_length=100) //ograniczenia długości ciągu
+		data = models.DateTimeField(auto_now=True) //pole daty ustawia obecną datę
+
+		from django.core.validators import MinValueValidator, MaxValueValidator
+    		pole = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)]) //walidatory sprawdzają poprawność wpisanych danych (minimalna i maksymalna wartość dla pola liczbowego)
+    		
+	- klucz obcy
+
+    		klucz_obcy = models.ForeignKey('model', on_delete=models.SET_NULL, null=True) //model-model do którego odnosi się pole; ustawia wartość NULL gdy 2 model zostanie usunięty
+
+	- liczba mnoga w nazwach modeli
+
+		class Meta:
+        		verbose_name_plural = "nazwa" //nazwa-nazwa modelu w liczbie mnogiej wyświetlająca się w panelu admina
+
+	- wyświetlanie nazw (inne niż domyślne np. Model(0)) w panelu admina
+
+		def __str__(self):
+        		return str(self.id) //wyświetlane jest id elementu
+
+    		def __str__(self):
+        		return f'{self.pole1} {self.pole2}' //wyświetlany jest ciąg utworzony z połączenia wartości z pola1 i pola2 -> "wartość1 wartość2" 
+
+		def __str__(self):
+        		return f'({self.pole1})[{self.pole2}] {self.pole3[:10]}...' //wyświetla ciąg "wartość1[wartość2] wartość3", wartość3-pierwszyc 10 znaków z pola3
+
+	- tworzenie linku do widoku dla pojedynczego rekordu
+
+		from django.urls import reverse
+		def get_absolute_url(self):
+        		return reverse("nazwa_widoku", args=[self.pk]) //zwraca url dla elementu o określonym kluczu podstawowym w konkretnym widoku
+
+		<a href="{{ rekord.get_absolute_url }}">{{rekord.pole}}</a>
+
+	- migracje
+		python manage.py makemigrations
+		python manage.py migrate
+
+	- generowanie panelu admina
+		python manage.py createsuperuser
+
+	- rejestracja modeli (plik admin.py)
+		from .models import model1,model2...
+		admin.site.register(model1)
+		admin.site.register(model2)
+		...
+
+4. TWORZENIE SZABLONÓW
+	szablony to pliki z rozszerzeniem .html umieszczone w folderze aplikacja/templates
+	- szablon główny
+		<!DOCTYPE html>
+		<html lang="pl">
+			<head>
+    				<meta charset="UTF-8">
+    				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    				<title>{% block tytul%}{% endblock %}</title> //blok tytuł zdefiniowany w każdej ze stron zawiera tytuł strony
+			</head>
+			<body>
+				tu można wpisać zawartość niezmienną, taką samą dla każdej ze stron
+
+    				{% block zawartosc%} //blok zawartość zdefiniowany w każdej ze stron zawiera elementy zmienne, inne dla każde ze stron
+    				{% endblock %}
+			</body>
+		</html>
+
+	- szablony rozszerzające szablon główny
+		{% extends "podfolder/szablon_główny.html" %}
+		{% block tytul%}Tytuł strony{% endblock %}
+		{% block zawartosc %} //zawartość strony inna niż w innych stronach
+		...
+		{% endblock %}
+	
+	- obsługa plików statycznych
+		pliki statyczne (np. obrazy, arkusze stylów, pliki skryptów js) należy umieścić w folderze aplikacja/static, a następnie załadować na stronie
+		
+		{% load static %} //ładowanie plików statycznych, na początku strony
+		<link rel="stylesheet" href="{% static 'css/style.css' %}"> //załadowany arkusz stylów, znajduje się w folderze static/css/style.css
+        	
+		<img src="{% static 'img/image.jpg' %}" alt=""> //załadowany obraz, znajduje się w folderze static/img/image.jpg
+    		<script src="{% static 'js/main.js'%}"></script> //załadowany skrypt js, znajduje się w folderze static/js/main.js
+		
+	- linki
+		<a href="{% url 'strona' %}">Dzieci</a> //strona to nazwa ścieżki strony docelowej
+
+	- zmienne, instrukcje warunkowe oraz pętle
+		{{zmienna}} //przekazana w widoku
+
+		{% if warunek %}...{% endif %}
+
+		{% for element in lista %}...{% endfor %}
+
+5. TWORZENIE WIDOKÓW (ZA POMOCĄ FUNKCJI) (plik views.py)
+	- podstawowy widok
+		from django.shortcuts import render
+		def widok(request):
+			...
+			return render(request, "konkretny_szablon.html", context) //wyświetla stronę o danym szablonie, w zmiennej context można przekazać zmienne wykorzystane na stronie
+
+	- lista wszystkich elementów z danej tabeli bazy danych
+		from django.shortcuts import render
+		from .models import model
+		def widok(request):
+    			lista_rekordów = model.objects.all()
+    
+    			context = {'lista': lista_rekordów}
+    			return render(request, "konkretny_szablon.html", context)
+		--------------------------------------------------------------------------------------------------------------------------------
+		{% extends "szablon_główny.html" %}
+		{% block tytul%}Tytuł{% endblock %}
+		{% block zawartosc %}	
+        	<table>
+            		<tr>
+               			<th>Pole1</th>
+               			<th>Pole2</th>
+       			</tr>
+           		{% for rekord in lista %} //lista jest przekazana w zmiennej context w widoku
+            		<tr>
+                		<td>{{rekord.pole1}}</td>
+                		<td>{{rekord.pole2}}</td>
+            		</tr>
+            		{% endfor %}
+        	</table>
+    		{% endblock %}
+
+	- strona szczegółów jednego elementu
+		from django.shortcuts import render
+		from .models import model
+		def widok(request, id):
+    			rekord=model.objects.get(pk = id) //wyszukanie elementu o klucczu podstawowym równym id, id jest przekazane w ścieżce zdefiniowanej w pliku urls.py
+    
+    			return render(request, "konkretny_szablon.html", context={'rekord':rekord})
+		--------------------------------------------------------------------------------------------------------------------------------
+		{% extends "szablon_główny.html" %}
+		{% block tytul%}Tytuł{% endblock %}
+		{% block zawartosc %}
+    		
+		{{rekord.pole1}}<br>
+    		{{rekord.pole2}}<br>
+		...
+		
+		{% endblock %}
+
+	- filtrowanie danych
+		from django.shortcuts import render
+		from .models import model
+		def widok(request):
+    			min = request.GET.get('wartość_min')
+    			max = request.GET.get('wartość_max')
+    
+    			wszystkie_rekordy = model.objects.all()
+    			if min:
+    				rekordy = model.filter(pole__gte = min) //wartości większe lub rónwne niż min
+    			if max:
+        			rekordy = model.filter(pole__lte = max) //wartości mniejsze lub rónwne niż max
+    
+    			return render(request, "konkretny_szablon.html", context={'rekordy': rekordy})
+		--------------------------------------------------------------------------------------------------------------------------------
+		{% extends "szablon_główny.html" %}
+		{% block tytul%}Tytuł{% endblock %}
+		{% block zawartosc %}
+		<form>
+    			{% csrf_token %}
+    			Wartość od: <select name="min">
+        			<option></option>
+        			<option value="1">1</option>
+        			<option value="2">2</option>
+    				...
+			</select>
+    			do: <select name="max">
+        			<option></option>
+        			<option value="1">1</option>
+        			<option value="2">2</option>
+				...
+    			</select>
+    			<button>Filtruj</button>
+		</form>
+    		<table>
+        		<tr>
+            			<th>Wartość1</th>
+            			<th>Wartość2</th>
+				...
+        		</tr>
+    			{% for rekord in rekordy %}
+        		<tr>
+            			<td>{{rekord.wartość1}}</td>
+            			<td>{{rekord.wartość2}}</td>
+				...
+        		</tr>
+    			{% endfor %}
+    		</table>
+		{% endblock %}
+
+6. RĘCZNE TWORZENIE FORMULARZY
+	- dodawanie rekordów do bazy danych (wraz z walidacją)
+		from django.shortcuts import render, redirect
+		from .models import model
+		def dodawanie(request):
+    			`if request.method == 'POST':
+        			tresc = request.POST.get('tresc')
+        			liczba = request.POST.get('liczba')
+        			if len(tresc) >= 5 and len(tresc) <= 100:
+            				rekord = model(tresc = tresc, ocena = ocena)
+            				try:
+                				rekord.save()
+                				return redirect("nazwa_ścieżki") //przekierowanie do innej strony
+            				except:
+                				pass
+        			elif len(tresc) < 5:
+            				return render(request, "szablon_dodawania.html", context={'odpowiedz':"Treść jest za krótka"})
+        			else:
+            				return render(request, "szablon_dodawania.html", context={'odpowiedz':"Treść jest za długa"})
+    			return render(request, "szablon_dodawania.html")
+		--------------------------------------------------------------------------------------------------------------------------------
+		{% extends "szablon_główny.html" %}
+		{% block tutul %}Tytuł{% endblock %}
+		{% block zawartosc %}
+		Dodaj
+		<form action="" method="post">
+    			{% csrf_token %}
+    			Liczba: <select name="liczba">
+        			<option></option>
+        			<option value="1">1</option>
+        			<option value="2">2</option>
+				...
+    			</select><br>
+    			Treść: <input type="text" name="tresc"><br>
+    			<button>Dodaj</button>
+    			{{odpowiedz}}
+		</form>
+		{% endblock %}
+
+	- edycja danych w bazie
+		from django.shortcuts import render, redirect
+		from .models import model
+		def edycja(request, id):
+    			rekord=model.objects.get(pk = id)
+    			if request.method == 'POST':
+        			tresc = request.POST.get('tresc')
+        			liczba = request.POST.get('liczba')
+        			if len(tresc) >= 5 and len(tresc) <= 100:
+            				komentarz.tresc = tresc
+            				komentarz.liczba = liczba
+            				komentarz.save()
+            				try:
+                				return redirect("nazwa_ścieżki",id=id)
+            				except:
+                				pass
+        			elif len(tresc) < 5:
+            				return render(request, "szablon_edycji.html", context={'blad':"Treść jest za krótka"})
+        			else:
+            				return render(request, "szablon_edycji.html", context={'blad':"Treść jest za długa"})
+    			return render(request, "szablon_edycji.html", context={'rekord':rekord})
+		--------------------------------------------------------------------------------------------------------------------------------
+		{% extends "szablon_główny.html" %}
+		{% block tutul %}Tytuł{% endblock %}
+		{% block zawartosc %}
+		Edytuj
+		<form action="" method="post">
+    			{% csrf_token %}
+    			Liczba: <select name="liczba" value={{rekord.liczba}}>
+        			<option></option>
+        			<option value="1">1</option>
+        			<option value="2">2</option>
+				...
+    			</select><br>
+    			Treść:<br>
+    			<textarea name="tresc" cols="30" rows="10">{{rekord.tresc}}</textarea><br>
+    			<button>Edytuj</button>
+		</form>
+		{{blad}}
+		{% endblock %}
+
+	- usuwanie rekordów
+		from django.shortcuts import render, redirect
+		from .models import model
+		def usun(request, id):
+    			if request.method == 'POST':
+        			odpowiedz = request.POST.get('pytanie')
+        			if odpowiedz=="tak":
+            				rekord=model.objects.all()
+            				rekord=Komentarz.objects.get(pk = id)
+            				rekord.delete()
+            				return redirect("nazwa_ścieżki")
+        			elif odpowiedz=="nie":
+            				return redirect("nazwa_ścieżki")
+    			return render(request, "szablon_usuwania.html")
+		--------------------------------------------------------------------------------------------------------------------------------
+		{% extends "szablon_główny.html" %}
+		{% block tytul%}Tytuł{% endblock %}
+		{% block zawartosc %}
+		Usunąć?
+		<form action="" method="post">
+    			{% csrf_token %}
+    			<button name="odpowiedz" type="submit" value="tak">Tak</button>
+    			<button name="odpowiedz" type="submit" value="nie">Nie</button>
+		</form>
+		{% endblock %}
+
+7. TWORZENIE FORMULARZY Z UŻYCIEM FORM LUB MODELFORM (plik forms.py)
+	- FORM
+		from django import forms
+		from django.core.exceptions import ValidationError
+		from .models import model
+		class modelForm(forms.Form):
+    			tresc = forms.CharField(max_length=99, min_length=3)
+    			ocena = forms.IntegerField(min_value=1, max_value=5)
+    
+    			def clean_tresc(self):
+        			tresc = self.cleaned_data['tresc'] 
+        			if '  ' in tresc:
+            				raise ValidationError('Tresc nie moze miec 2 spacji')
+        			return tresc
+		--------------------------------------------------------------------------------------------------------------------------------
+		from django.shortcuts import render, redirect
+		from .forms import modelForm
+		def formview(request):
+    			if(request.method == 'POST'):
+        			form = modelForm(request.POST) //pobranie wypełnionego formularza
+				if form.is_valid():
+            				form.save()
+            				return redirect('nazwa_ścieżki')
+    				else:
+        				form = modelForm() //zwrócenie pustego formularza
+    			return render(request, 'form.html', context={'form': form})
+		--------------------------------------------------------------------------------------------------------------------------------
+		{% extends "szablon_główny.html" %}
+		{% block tutul %}Tytuł{% endblock %}
+		{% block zawartosc %}
+		Dodaj
+		<form action="" method="post">
+    			{% csrf_token %}
+    			<ul>
+    				{{ form.as_ul }}
+    			</ul>
+    			<button>Dodaj</button>
+		</form>
+		{% endblock %}
+
+
+	- MODELFORM
+		from django import forms
+		from django.core.exceptions import ValidationError
+		from .models import model
+		class modelModelForm(forms.ModelForm): //plik forms.py
+    			def clean_tresc(self): //przykładowa walidacja danych
+        			tresc = self.cleaned_data['tresc']
+        			if '  ' in tresc:
+            				raise ValidationError('Tresc nie moze miec 2 spacji')
+    			class Meta:
+        			model = model
+        			fields = ['tresc', 'liczba']
+		--------------------------------------------------------------------------------------------------------------------------------
+		from django.shortcuts import render, redirect
+		from .forms import modelModelForm
+		def modelformview(request):
+    			if(request.method == 'POST'):
+        			form = modelModelForm(request.POST) //pobranie wypełnionego formularza
+				if form.is_valid():
+            				form.save()
+            				return redirect('nazwa_ścieżki')
+    				else:
+        				form = modelModelForm() //zwrócenie pustego formularza
+    			return render(request, 'modelform.html', context={'form': form})
+		--------------------------------------------------------------------------------------------------------------------------------
+		{% extends "szablon_główny.html" %}
+		{% block tutul %}Tytuł{% endblock %}
+		{% block zawartosc %}
+		Dodaj
+		<form action="" method="post">
+    			{% csrf_token %}
+    			<ul>
+    				{{ form.as_ul }}
+    			</ul>
+    			<button>Dodaj</button>
+		</form>
+		{% endblock %}
+
+8. CLASS BASED VIEWS
+	- CreateView
+		from django.views.generic.edit import CreateView
+		from .models import model
+		class modelkNew(CreateView):
+    			model = model
+    			#fields = ['pole1', 'pole2', ...] //tworzy formularz dla wybranych pól
+    			fields = '__all__' //tworzy formularz dla wszystkich pól
+		--------------------------------------------------------------------------------------------------------------------------------
+		{% extends "szablon_główny.html" %}
+		{% block tutul %}Tytuł{% endblock %}
+		{% block zawartosc %}
+		Dodaj
+		<form action="" method="post">
+    			{% csrf_token %}
+    			<ul>
+        			{{ form.as_ul }}
+        			<button>Dodaj</button>
+    			</ul>
+		</form>
+		{% endblock %}
+	- UpdateView
+		from django.views.generic.edit import UpdateView
+		from .models import model
+		class modelEdit(UpdateView):
+    			model = model
+    			#fields = ['pole1', 'pole2', ...] //tworzy formularz do edycji wybranych pól
+    			fields = '__all__' //tworzy formularz do edycji wszystkich pól
+		--------------------------------------------------------------------------------------------------------------------------------
+		{% extends "szablon_główny.html" %}
+		{% block tutul %}Tytuł{% endblock %}
+		{% block zawartosc %}
+		Edytuj
+		<form action="" method="post">
+    			{% csrf_token %}
+    			<ul>
+        			{{ form.as_ul }}
+        			<button>Edytuj</button>
+    			</ul>
+		</form>
+	- ListView
+		from django.shortcuts import render, redirect
+		from .models import model
+		from django.views.generic.list import ListView
+		class modelList(ListView):
+    			model = model
+    			#context_object_name = "nowa_nazwa" //domyślna to object_list
+    			#template_name = "nowa_nazwa.html" //domyślna to model_list.html
+    
+    			def get_queryset(self, *args, **kwargs):
+        			queryset = super(modelList, self).get_queryset(*args, **kwargs)
+        			queryset = queryset.order_by('-pole') //sortowanie malejąco
+        			return queryset
+		--------------------------------------------------------------------------------------------------------------------------------
+		{% extends "szablon_główny.html" %}
+		{% block tytul%}Tytuł{% endblock %}
+		{% block zawartosc %}
+		<form>
+    			{% csrf_token %}
+    			Wartość od: <select name="min">
+        			<option></option>
+        			<option value="1">1</option>
+        			<option value="2">2</option>
+				...
+    			</select>
+    			do: <select name="max">
+        			<option></option>
+        			<option value="1">1</option>
+        			<option value="2">2</option>
+				...
+    			</select>
+    			<button>Filtruj</button>
+		</form>
+    		<table>
+        		<tr>
+            			<th>Pole1</th>
+            			<th>Pole2</th>
+				<th>Pole3</th>
+				...
+            			<th></th>
+            			<th></th>
+        		</tr>
+    			{% for rekord in object_list %}
+        		<tr>
+            			<td>{{rekord.pole1}}</td>
+            			<td>{{rekord.pole2}}</td>
+            			<td><a href="{{ rekord.get_absolute_url }}">{{rekord.pole3}}</a></td>
+            			<td><a href="{% url 'edytuj' id=rekord.id %}">Edytuj</a></td>
+            			<td><a href="{% url 'usun' id=rekord.id %}">Usuń</a></td>
+        		</tr>
+    			{% endfor %}
+    		</table>
+		{% endblock %}
+
+	- DetailView
+		from django.shortcuts import render, redirect
+		from .models import model
+		from django.views.generic.detail import DetailView
+		class modelDetail(DetailView):
+    			model = model
+		--------------------------------------------------------------------------------------------------------------------------------
+		{% extends "szablon_główny.html" %}
+		{% block tytul%}Tytuł{% endblock %}
+		{% block zawartosc %}
+    		{% csrf_token %}
+    		{{model.pole1}}<br>
+    		{{model.pole2}}<br>
+    		...
+		{% endblock %}
+
+9. TWORZENIE ŚCIEŻEK (plik urls.py)
+	- struktura pliku
+		from django.urls import path
+		from django.contrib import admin
+		from fabryka.views import ...
+		
+		urlpatterns = [
+			...
+		]
+
+	- ścieżki dla widoków funkcji
+		path(trasa, widok, name="nazwa")
+
+	- przekazywanie argumentów do widoków za pomocą ścieżki
+		path('strona/<int:liczba>', widok, name="nazwa") // po wpisaniu "strona/1" django wywoła funkcję widok(request, liczba=1)
+
+	- ścieżki dla widoków klas
+		path(trasa, ClassBasedView.as_view(), name="nazwa")
+
+	- dołączanie innej konfiguracji adresu URL
+		path("strona/", include(''))
+
+10. LOGOWANIE, AUTORYZACJA I DEKORATORY
+	- ustawianie ścieżek
+		from django.urls import path, include
+		path("accounts/", include('django.contrib.auth.urls')) //główna ścieżka kont - logowanie, wylogowanie
+
+		LOGIN_REDIRECT_URL = '/' //strona wyświetlana po zalogowaniu
+		LOGOUT_REDIRECT_URL = '/' //strona wyświetlana po wylogowaniu
+
+	- formularz (przycisk) wylogowujący
+		{% if user.is_authenticated %}
+		<form action="{% url 'logout' %}" method="post">
+        		{% csrf_token %}
+        		<input type="submit" value="Wyloguj">
+    		</form>
+		{% endif %}
+
+	- formularz logujący - login.html, znajduje się w folderze templates/registration
+		{% extends "szablon_główny.html" %}
+		{% block tytul%}Tytuł{% endblock %}
+		{% block zawartosc %}
+		<form action="" method="post">
+    			{% csrf_token %}
+    			<table>
+    				{{ form.as_table }}
+    			</table>
+    			<input type="submit" value="Zaloguj">
+		</form>
+    	{% endblock %}
+
+	- ograniczanie dostępu tylko dla zalogowanych użytkowników - należy dodać dekorator login_required przed widokiem
+		from django.contrib.auth.decorators import login_required
+
+		@login_required
+		def widok(request):
+			...
+			return render(request, "konkretny_szablon.html")
+
+	- ochrona przed atakiem CSRF
+		from django.views.decorators.csrf import csrf_exempt
+		@csrf_exempt //należy dodać dekorator csrf_exempt przed widokiem
+		def widok(request):
+			...
+			return render(request, "konkretny_szablon.html")
+		--------------------------------------------------------------------------------------------------------------------------------
+		{% extends "szablon_główny.html" %}
+		{% block tytul%}Tytuł{% endblock %}
+		{% block zawartosc %}
+		<form action="" method="post">
+    			{% csrf_token %} //należy dodać csrf_token na początku formularza przesyłającego dane metodą POST
+			...
+		</form>
+    		{% endblock %}
